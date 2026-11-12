@@ -1,7 +1,39 @@
 <!doctype html>
-<html lang="ja"><meta charset="utf-8"><title>Notion Links panel smoke test</title>
-<style>body{font:16px/1.6 system-ui;margin:48px;max-width:700px;background:#f4f4f1;color:#242424}code{background:#ddd;padding:2px 6px}</style>
-<h1>パネルの操作テスト</h1>
-<p>localhostはNotionページではありません。右側に「取得できません」と「未取得」が表示されることが正しい動作です。実Notionの取得検証ではありません。</p>
-<p>右上のLinksからPaneを開き、設定を操作できます。実Notionのリンク取得はできません。</p>
-<script src="../extension/core.js"></script><script src="../extension/notion-dom.js"></script><script src="../extension/page-data.js"></script><script src="../extension/settings.js"></script><script src="../extension/decorations.js"></script><script src="../extension/panel-style.js"></script><script src="../extension/content.js"></script></html>
+<html lang="ja">
+  <meta charset="utf-8" /><title>Notion Links panel smoke test</title>
+  <style>
+    body {
+      font: 16px/1.6 system-ui;
+      margin: 48px;
+      max-width: 700px;
+      background: #f4f4f1;
+      color: #242424;
+    }
+    code {
+      background: #ddd;
+      padding: 2px 6px;
+    }
+  </style>
+  <h1>パネルの操作テスト</h1>
+  <p>
+    localhostはNotionページではありません。右側に「取得できません」と「未取得」が表示されることが正しい動作です。実Notionの取得検証ではありません。
+  </p>
+  <p>右上のLinksからPaneを開き、設定を操作できます。実Notionのリンク取得はできません。</p>
+  <script src="../extension/core.js"></script>
+  <script src="../extension/notion-dom.js"></script>
+  <script src="../extension/notion-records.js"></script>
+  <script src="../extension/notion-api.js"></script>
+  <script src="../extension/page-structure.js"></script>
+  <script src="../extension/backlinks.js"></script>
+  <script src="../extension/page-data.js"></script>
+  <script src="../extension/settings.js"></script>
+  <script src="../extension/decoration-style.js"></script>
+  <script src="../extension/decorations.js"></script>
+  <script src="../extension/panel-style.js"></script>
+  <script src="../extension/ui-elements.js"></script>
+  <script src="../extension/pane-view.js"></script>
+  <script src="../extension/toolbar.js"></script>
+  <script src="../extension/page-snapshot.js"></script>
+  <script src="../extension/outline-navigation.js"></script>
+  <script src="../extension/content.js"></script>
+</html>

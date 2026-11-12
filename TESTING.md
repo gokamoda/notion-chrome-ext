@@ -1,3 +1,33 @@
+## 2026-11-13: リンクを同じタブで開く
+
+- Forward links／Backward links の通常クリックは、同じタブでページ移動するよう変更（以前は常に別タブ）。⌘/Ctrl・Shift・Alt付きのクリックと中クリックはブラウザの既定動作に任せる。
+- 移動方法：`history.pushState` で `/p/<ページID>` に変え、`popstate` を送る。実Notionで、ページを再読み込みせずに移動し（`performance.timeOrigin` 不変）、ブラウザの「戻る」でも再読み込みなしで元のページへ戻ることを確認。
+- 結合テストに通常クリックと⌘クリックの2件を追加し、35件成功。
+- 拡張を再読み込みし、実Notionでペインの「2026-11-13 test」を実際にクリック：再読み込みなしで移動し、移動先のペインが更新される（Backward links に claude-test）。「戻る」で claude-test に再読み込みなしで戻り、Forward links 4件を再表示。
+
+## 2026-11-13: 箇条書き内のリンクが Forward links に出ない
+
+- 症状：ページメンションだけの箇条書きを追加しても、Forward links に表示されない。
+- 原因：Notion は箇条書きのブロックの中に、同じ `data-block-id` を持つ高さ0の空要素を置く（実Notionで確認）。描画済みブロックの収集で、この空要素が「リンクなし」でブロックの記録を上書きしていた。
+- 修正：同じ id の要素から見つかったリンクを統合する（`page-snapshot.js`）。結合テストに再現ケースを追加し、33件成功。Nodeテスト15件も成功。拡張を再読み込みし、実Notionで「2026-11-13 test」が Forward links に表示される（3件→4件）ことを確認。
+
+## 2026-11-13: ページ内DBのずれ（v0.15.2）
+
+- 症状：ページ内DBのタイトルと表が本文の左端から279px右にずれる。
+- 原因：DBのタイトル行を包む要素は `data-content-editable-void` を持ち、行番号用の `position: static !important` の対象になっていた。Notionはこの要素を `position: relative; inset-inline-start: -279px` で左へずらしているため、staticにするとずれが消える。
+- 修正：この規則の対象からDB内を外した。実Notionのclaude-testページ（テスト用DB「nlx-test-db」を追加）で、同じ変更をページ内のstyleに当てるとタイトルが本文と同じ左端に揃い、他のブロックの位置は変わらないことを確認。Nodeテスト15件は成功。
+
+## 2026-11-13: 可読性のリファクタリング
+
+- Nodeテスト15件、合成DOMテスト15件、ブラウザ結合テスト32件が成功。
+- Paneの開閉・自動取得・重複排除・安全な文字列描画・幅／高さ変更・装飾を既存テストで確認。
+- 分割した通信・本文解析・Backlinks取得の主要6関数は、整形前後の構文木比較でも処理が同一であることを確認。
+- `npm run format:check`、Manifest内の全スクリプトの存在確認、`git diff --check` が成功。
+- 拡張を再読み込みし、実Notion（claude-testページ）で確認：Paneの開閉、Outline 12件・Forward 3件・Backward 0件の取得、行番号と見出し縦棒の表示、Notion標準の目次の非表示。
+- その後の変更：`page-data.js` の `loadPageChunk` 読み取りを `notion-api.js` の `post()` に統一し、日本語コメント3か所を英語にそろえ、`decoration-style.js` のCSSコメントの字下げを修正。テスト（Node 15件・合成DOM 15件・結合 32件）は再実行して成功。拡張を再読み込みし、実Notionでページ構造の取得（Outline 12件・Forward 3件、取得失敗の表示なし）とコンソールエラーがないことを再確認。
+
+---
+
 # 検証記録
 
 2026-11-12。実機調査と合成テストを区別します。

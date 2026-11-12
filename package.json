@@ -1,0 +1,12 @@
+{
+  "name": "notion-page-navigator-local",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "format": "prettier --write \"extension/**/*.{js,json,html,css}\" \"tests/**/*.{js,cjs,html}\" package.json .prettierrc.json",
+    "format:check": "prettier --check \"extension/**/*.{js,json,html,css}\" \"tests/**/*.{js,cjs,html}\" package.json .prettierrc.json"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

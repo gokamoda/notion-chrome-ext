@@ -1,32 +1,36 @@
 {
   "manifest_version": 3,
-  "name": "Notion Forward & Backlinks — Local",
-  "version": "0.15.1",
-  "permissions": [
-    "storage"
-  ],
-  "description": "Notionの描画済み本文リンクと標準Backlinksを右側に表示。ローカル専用MVP。",
+  "name": "Notion Page Navigator",
+  "version": "1.0.0",
+  "permissions": ["storage"],
+  "description": "Notionのページに見出し一覧・リンク先・リンク元のペインと、行番号・見出しの縦棒を追加します。",
   "content_scripts": [
     {
-      "matches": [
-        "https://www.notion.so/*",
-        "https://notion.so/*",
-        "https://app.notion.com/*"
-      ],
+      "matches": ["https://www.notion.so/*", "https://notion.so/*", "https://app.notion.com/*"],
       "js": [
         "core.js",
         "notion-dom.js",
+        "notion-records.js",
+        "notion-api.js",
+        "page-structure.js",
+        "backlinks.js",
         "page-data.js",
         "settings.js",
+        "decoration-style.js",
         "decorations.js",
         "panel-style.js",
+        "ui-elements.js",
+        "pane-view.js",
+        "toolbar.js",
+        "page-snapshot.js",
+        "outline-navigation.js",
         "content.js"
       ],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_title": "Page navigator の設定",
+    "default_title": "Notion Page Navigator の設定",
     "default_popup": "popup.html"
   }
 }
