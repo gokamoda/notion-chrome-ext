@@ -1,0 +1,3 @@
+.DS_Store
+# Screen captures of the local Notion account (see TESTING.md)
+tests/*.png

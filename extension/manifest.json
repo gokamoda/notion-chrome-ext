@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Notion Forward & Backlinks — Local",
+  "version": "0.15.1",
+  "permissions": [
+    "storage"
+  ],
+  "description": "Notionの描画済み本文リンクと標準Backlinksを右側に表示。ローカル専用MVP。",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.notion.so/*",
+        "https://notion.so/*",
+        "https://app.notion.com/*"
+      ],
+      "js": [
+        "core.js",
+        "notion-dom.js",
+        "page-data.js",
+        "settings.js",
+        "decorations.js",
+        "panel-style.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Page navigator の設定",
+    "default_popup": "popup.html"
+  }
+}

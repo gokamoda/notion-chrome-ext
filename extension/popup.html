@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<title>Notion Page navigator 設定</title>
+<style>
+  :root{color-scheme:light dark;--bg:#fff;--fg:#30302d;--line:#e8e8e4;--muted:#77776f;--accent:#197d34}
+  @media(prefers-color-scheme:dark){:root{--bg:#20201f;--fg:#e4e4df;--line:#3b3b36;--muted:#aaa99f}}
+  *{box-sizing:border-box}
+  body{margin:0;width:300px;padding:12px 16px 14px;font:13px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+  h1{font-size:14px;margin:0 0 4px}
+  h2{font-size:11px;font-weight:650;letter-spacing:.06em;color:var(--muted);margin:14px 0 2px}
+  label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:7px 0}
+  label span{flex:1}
+  input[type=checkbox]{accent-color:var(--accent)}
+  input[type=color]{width:36px;height:24px;padding:0;border:1px solid var(--line);border-radius:4px;background:transparent}
+  select,input[type=number]{width:120px;padding:3px 4px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:inherit;font:inherit}
+  .note{font-size:11px;color:var(--muted);margin:6px 0 0}
+</style>
+<h1>Page navigator 設定</h1>
+<form id="form">
+  <h2>セクション</h2>
+  <label><span>Outline</span><input type="checkbox" name="outline"></label>
+  <label><span>Forward links</span><input type="checkbox" name="forward"></label>
+  <label><span>Backward links</span><input type="checkbox" name="backward"></label>
+  <h2>本文の表示</h2>
+  <label><span>行番号（ブロック単位）</span><input type="checkbox" name="lineNumbers"></label>
+  <label><span>見出しレベルの縦棒（1〜3本）</span><input type="checkbox" name="headingMarkers"></label>
+  <p class="note">行番号はページ構造の順番で振ります。構造を取得できない場合は描画中のブロックだけを数えます。行番号用のCustom CSSを別に読み込んでいる場合は外してください。</p>
+  <h2>配色・レイアウト</h2>
+  <label><span>配色</span><select name="theme"><option value="auto">Notionに合わせる</option><option value="light">ライト</option><option value="dark">ダーク</option></select></label>
+  <label><span>アクセント・見出しの色</span><input type="color" name="accent"></label>
+  <label><span>行番号の色</span><input type="color" name="numberColor"></label>
+  <label><span>Pane幅（px）</span><input type="number" name="paneWidth" min="240" max="720" step="10"></label>
+</form>
+<p class="note" id="status">設定はChrome内に保存し、開いているNotionのタブへすぐ反映します。</p>
+<script src="settings.js"></script>
+<script src="popup.js"></script>
+</html>
