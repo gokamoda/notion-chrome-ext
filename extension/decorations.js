@@ -18,7 +18,9 @@
   numbers.id = 'nlx-number-styles';
   const code = document.createElement('style');
   code.id = 'nlx-code-styles';
-  document.documentElement.append(base, numbers, code);
+  const wide = document.createElement('style');
+  wide.id = 'nlx-wide-styles';
+  document.documentElement.append(base, numbers, code, wide);
   const UUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
   const hyphenate = (id) =>
     id
@@ -220,6 +222,7 @@
           .join('\n')
       : '';
     if (numbers.textContent !== text) numbers.textContent = text;
+    if (!frame && wide.textContent) wide.textContent = '';
     codeRoot = frame && settings.codeLineNumbers ? ctx.root || null : null;
     if (frame) setAttr(frame, 'data-nlx-code', !!codeRoot);
     refreshCode();
@@ -232,11 +235,17 @@
     setVar(frame, '--nlx-pane-width', `${settings.paneWidth}px`);
     setVar(frame, '--nlx-number-color', settings.numberColor);
     setVar(frame, '--nlx-heading-color', settings.accent);
+    // After the pane's padding applies: the rules measure the scroller's width with it.
+    const wideText =
+      paneOpen && ctx.root
+        ? NotionLinksWideBlocks.rules(frame, ctx.root, `${F}[data-nlx-pane] .notion-page-content`)
+        : '';
+    if (wide.textContent !== wideText) wide.textContent = wideText;
   }
 
   globalThis.NotionLinksDecorations = Object.freeze({
     apply,
     refreshCode,
-    isOwnNode: (n) => n === base || n === numbers || n === code,
+    isOwnNode: (n) => n === base || n === numbers || n === code || n === wide,
   });
 })();

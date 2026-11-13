@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Notion Page Navigator",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "permissions": ["storage"],
   "description": "Notionのページに見出し一覧・リンク先・リンク元のペインと、行番号・コードブロックの行番号・見出しの縦棒を追加します。",
   "content_scripts": [
@@ -18,6 +18,7 @@
         "settings.js",
         "decoration-style.js",
         "code-numbers.js",
+        "wide-blocks.js",
         "decorations.js",
         "panel-style.js",
         "ui-elements.js",
