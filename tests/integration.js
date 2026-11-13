@@ -153,6 +153,37 @@
       '入れ子の対象要素（コードブロック）は内側だけに番号',
     );
     {
+      const inner = document.getElementById('code-inner');
+      const after = () => getComputedStyle(inner, '::after').content;
+      check(after() === '"1"', 'コードブロックの各行に番号（1行）');
+      Object.assign(inner.style, {
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-all',
+        width: '200px',
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        lineHeight: '20px',
+      });
+      inner.textContent = `a = 1\n${'x'.repeat(60)}\n\nb = 2`;
+      // Normally the next frame; a hidden tab has no frames, so the delayed update is awaited.
+      const rows = () => Math.round(inner.getBoundingClientRect().height / 20);
+      const expected = () => `"1\\a 2${'\\a '.repeat(rows() - 4)}\\a 3\\a 4"`;
+      for (let i = 0; i < 30 && after() !== expected(); i++) await wait(100);
+      check(
+        rows() > 4 && after() === expected(),
+        'コードの折り返した行の続きには番号を振らない（編集で更新）',
+      );
+      check(
+        parseFloat(getComputedStyle(inner).paddingLeft) >
+          parseFloat(getComputedStyle(inner).getPropertyValue('--nlx-code-pad')) &&
+          getComputedStyle(inner, '::after').pointerEvents === 'none',
+        'コードの番号の分だけ左に余白を取り、番号は操作の対象外',
+      );
+      inner.removeAttribute('style');
+      inner.textContent = 'print(1)';
+      await wait(100);
+    }
+    {
       const leaves = [
         ...document.querySelectorAll('.notion-page-content [data-block-id] > [contenteditable]'),
       ];

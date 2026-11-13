@@ -9,13 +9,16 @@
  */
 (() => {
   'use strict';
-  const { F, LINE, DB, COUNT, text } = NotionLinksDecorationStyle;
+  const { F, LINE, DB, COUNT, CODE, CODE_TEXT, text } = NotionLinksDecorationStyle;
+  const { lines, measure, gutterContent } = NotionLinksCodeNumbers;
   const base = document.createElement('style');
   base.id = 'nlx-document-styles';
   base.textContent = text;
   const numbers = document.createElement('style');
   numbers.id = 'nlx-number-styles';
-  document.documentElement.append(base, numbers);
+  const code = document.createElement('style');
+  code.id = 'nlx-code-styles';
+  document.documentElement.append(base, numbers, code);
   const UUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
   const hyphenate = (id) =>
     id
@@ -23,6 +26,10 @@
       .toLowerCase()
       .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
   let previousFrame = null;
+  let codeRoot = null;
+  // Notion's own left padding of each code text element, read before our padding applies.
+  const codePads = new Map();
+  let codeAfter = '';
 
   function setAttr(node, key, on) {
     if (!on) {
@@ -100,6 +107,95 @@
     return out.join('\n');
   }
 
+  /* Code line numbers. Two passes: first the padding for the number column (it depends only
+   * on the number of digits), then, with that padding in place, the rows of each line are
+   * measured (the padding changes the wrap width) and the gutter content and position written.
+   * The column: Notion's own padding of the text element (0 in observed code blocks), the
+   * digits, then a 12px gap; numbers end at the gap. */
+
+  function codeBlocks(root) {
+    const out = [];
+    for (const block of root.querySelectorAll(CODE)) {
+      const raw = block.getAttribute('data-block-id');
+      const leaf = block.querySelector(CODE_TEXT);
+      if (!leaf || !UUID.test(raw) || leaf.closest('[data-block-id]') !== block) continue;
+      out.push({ block, leaf, id: hyphenate(raw) });
+    }
+    return out;
+  }
+
+  /* The colour behind a code block's text, composited from the backgrounds of its ancestors
+   * (Notion's code background is nearly transparent, observed 2026-11-13: rgba(252,252,252,0.03)
+   * over the page). The number column is filled with it so that code scrolled sideways
+   * passes under the numbers. Colours that are not rgb()/rgba() end the walk. */
+  function opaqueBackground(node) {
+    const layers = [];
+    for (let n = node; n; n = n.parentElement) {
+      const m = getComputedStyle(n).backgroundColor.match(
+        /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)$/,
+      );
+      if (!m) break;
+      const a = m[4] === undefined ? 1 : Number(m[4]);
+      if (a > 0) layers.push([+m[1], +m[2], +m[3], a]);
+      if (a >= 1) break;
+    }
+    if (!layers.length || layers.at(-1)[3] < 1) return 'transparent';
+    let [r, g, b] = layers.pop();
+    for (const [lr, lg, lb, a] of layers.reverse()) {
+      r = lr * a + r * (1 - a);
+      g = lg * a + g * (1 - a);
+      b = lb * a + b * (1 - a);
+    }
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+  }
+
+  function refreshCode() {
+    const root = codeRoot?.isConnected ? codeRoot : null;
+    if (!root) {
+      if (code.textContent) code.textContent = '';
+      codeAfter = '';
+      return;
+    }
+    const sel = (id) =>
+      `${F}[data-nlx-code] .notion-page-content ${CODE}[data-block-id="${id}"] ${CODE_TEXT}`;
+    const blocks = codeBlocks(root);
+    const pads = [];
+    for (const b of blocks) {
+      const style = getComputedStyle(b.leaf);
+      if (!style.getPropertyValue('--nlx-code-pad'))
+        codePads.set(b.id, parseFloat(style.paddingInlineStart) || 0);
+      b.pad = codePads.get(b.id) ?? 0;
+      b.digits = String(Math.max(1, lines(b.leaf).length)).length;
+      pads.push(
+        `${sel(b.id)}{--nlx-code-pad:${b.pad}px;padding-inline-start:calc(${b.pad}px + ${b.digits}ch + 12px) !important}`,
+      );
+    }
+    const padText = pads.join('\n');
+    if (code.textContent !== `${padText}\n${codeAfter}`)
+      code.textContent = `${padText}\n${codeAfter}`;
+    const after = [];
+    for (const b of blocks) {
+      const rows = measure(b.leaf);
+      const cb = b.leaf.offsetParent || b.block;
+      const lr = b.leaf.getBoundingClientRect(),
+        cr = cb.getBoundingClientRect();
+      const style = getComputedStyle(b.leaf);
+      const top =
+        lr.top +
+        b.leaf.clientTop +
+        (parseFloat(style.paddingTop) || 0) -
+        (cr.top + cb.clientTop) +
+        cb.scrollTop;
+      const left = lr.left + b.leaf.clientLeft - (cr.left + cb.clientLeft) + cb.scrollLeft;
+      after.push(
+        `${sel(b.id)}::after{content:"${gutterContent(rows)}" !important;top:${Math.round(top)}px;left:${Math.round(left)}px;width:calc(${b.pad}px + ${b.digits}ch + 12px);background:${opaqueBackground(b.leaf)}}`,
+      );
+    }
+    codeAfter = after.join('\n');
+    const full = `${padText}\n${codeAfter}`;
+    if (code.textContent !== full) code.textContent = full;
+  }
+
   function apply(ctx, settings, paneOpen, numberMap) {
     const frame = ctx?.frame || null;
     if (previousFrame && previousFrame !== frame)
@@ -109,6 +205,7 @@
         'data-nlx-managed',
         'data-nlx-numbers',
         'data-nlx-headings',
+        'data-nlx-code',
       ])
         setAttr(previousFrame, key, false);
     previousFrame = frame;
@@ -123,6 +220,9 @@
           .join('\n')
       : '';
     if (numbers.textContent !== text) numbers.textContent = text;
+    codeRoot = frame && settings.codeLineNumbers ? ctx.root || null : null;
+    if (frame) setAttr(frame, 'data-nlx-code', !!codeRoot);
+    refreshCode();
     if (!frame) return;
     setAttr(frame, 'data-nlx-pane', paneOpen);
     setAttr(frame, 'data-nlx-outline', paneOpen && settings.outline);
@@ -136,6 +236,7 @@
 
   globalThis.NotionLinksDecorations = Object.freeze({
     apply,
-    isOwnNode: (n) => n === base || n === numbers,
+    refreshCode,
+    isOwnNode: (n) => n === base || n === numbers || n === code,
   });
 })();

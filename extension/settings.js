@@ -10,13 +10,21 @@
     backward: true,
     lineNumbers: true,
     headingMarkers: true,
+    codeLineNumbers: true,
     sizes: Object.freeze([1, 1, 1]),
   });
 
   function sanitize(value) {
     const result = { ...defaults };
     if (!value || typeof value !== 'object') return result;
-    for (const key of ['outline', 'forward', 'backward', 'lineNumbers', 'headingMarkers']) {
+    for (const key of [
+      'outline',
+      'forward',
+      'backward',
+      'lineNumbers',
+      'headingMarkers',
+      'codeLineNumbers',
+    ]) {
       if (typeof value[key] === 'boolean') result[key] = value[key];
     }
     if (['auto', 'light', 'dark'].includes(value.theme)) result.theme = value.theme;

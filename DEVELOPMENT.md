@@ -17,7 +17,8 @@ Chromeに読み込むのは `extension/` です。ビルドは不要です。Jav
 | backlinks.js | リンク元の取得、親ブロックからページを特定、重複排除 |
 | notion-api.js / notion-records.js | 通信・タイムアウト、Notion応答の共通処理 |
 | notion-dom.js / core.js | NotionのDOM判定、URL検証・正規化 |
-| decorations.js / decoration-style.js | 行番号・見出しマーカーの適用、対応するCSS |
+| decorations.js / decoration-style.js | 行番号・見出しマーカー・コードブロックの行番号の適用、対応するCSS |
+| code-numbers.js | コードブロックの行の分割と、折り返し後の表示行数の計測 |
 | settings.js / popup.html / popup.js | 設定の検証・保存、設定画面 |
 
 Notionからの読み取り方法の変更は `notion-api.js`・`page-data.js`・`backlinks.js`、応答の解析変更は `notion-records.js`・`page-structure.js`、DOM変更への追従は `notion-dom.js`・`decoration-style.js` を確認してください。

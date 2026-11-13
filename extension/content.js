@@ -234,9 +234,23 @@
   }
 
   const own = (n) => !!n && (NotionLinksDecorations.isOwnNode(n) || !!n.closest?.('#nlx-toolbar'));
+  let codeFrame = 0;
   const observer = new MutationObserver((records) => {
     if (records.every((r) => own(r.target.nodeType === 1 ? r.target : r.target.parentElement)))
       return;
+    // Edits inside a code block renumber its lines at the next frame, not after the delay below.
+    if (
+      !codeFrame &&
+      records.some((r) =>
+        (r.target.nodeType === 1 ? r.target : r.target.parentElement)?.closest?.(
+          '.notion-code-block',
+        ),
+      )
+    )
+      codeFrame = requestAnimationFrame(() => {
+        codeFrame = 0;
+        NotionLinksDecorations.refreshCode();
+      });
     schedule();
   });
   observer.observe(document.documentElement, {

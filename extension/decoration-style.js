@@ -21,6 +21,10 @@
    *   a callout's text is in its child blocks, observed 2026-11-12).
    * The exclusions sit in :where() so the selector keeps the specificity of LINE alone; the
    * heading rules below must still win over the number rule. */
+  /* The text element of a code block: the innermost LINE element (the code block's void wrapper
+   * contains it). */
+  const CODE = `.notion-code-block[data-block-id]:not(:is(${DB}) *)`;
+  const CODE_TEXT = `:is(${LINE}):not(:has(:is(${LINE})))`;
   const COUNT = `:is(${LINE}):where(:not(:is(${DB}) *):not(.notion-table-row *):not(:is(${LINE}):not(.notion-table-row):has(:is(${LINE}))):not(.notion-callout-block [data-content-editable-void="true"]:has([aria-label])))`;
 
   const text = `
@@ -170,14 +174,44 @@ ${F}[data-nlx-headings]
     var(--nlx-bar) right 3px center/2px 90% no-repeat,
     var(--nlx-bar) right 0 center/2px 90% no-repeat;
 }
+/* Code line numbers (see code-numbers.js). The code text element is kept static so that its
+ * ::after is positioned against the block (made relative here), outside any scroller inside it;
+ * the per-block rules set the padding, position and content. */
+${F}[data-nlx-code] .notion-page-content ${CODE} {
+  position: relative;
+}
+${F}[data-nlx-code] .notion-page-content ${CODE} ${CODE_TEXT} {
+  position: static !important;
+}
+${F}[data-nlx-code] .notion-page-content ${CODE} ${CODE_TEXT}::after {
+  position: absolute;
+  box-sizing: border-box;
+  padding-inline-end: 12px;
+  white-space: pre;
+  text-align: end;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--nlx-number-color, #777);
+  pointer-events: none;
+  user-select: none;
+}
 @media print {
   .notion-frame[data-nlx-pane] {
     padding-inline-end: 0 !important;
   }
-  ${F} .notion-page-content :is(${LINE})::before {
+  ${F} .notion-page-content :is(${LINE})::before,
+  ${F} .notion-page-content ${CODE} ${CODE_TEXT}::after {
     display: none !important;
   }
 }
 `;
-  globalThis.NotionLinksDecorationStyle = Object.freeze({ F, LINE, DB, COUNT, text });
+  globalThis.NotionLinksDecorationStyle = Object.freeze({
+    F,
+    LINE,
+    DB,
+    COUNT,
+    CODE,
+    CODE_TEXT,
+    text,
+  });
 })();
