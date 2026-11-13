@@ -109,6 +109,14 @@ ${F}[data-nlx-numbers] .notion-page-content :is(${COUNT})::before {
   pointer-events: none;
   user-select: none;
 }
+/* Code blocks: Notion shows the + and drag handles 8px below the block top with a 24px box
+ * (observed 2026-11-13), not on the first code line (36px lower); the number takes the same
+ * place as the handles, as it does for other blocks. */
+${F}[data-nlx-numbers] .notion-page-content ${CODE} :is(${COUNT})::before {
+  top: 8px;
+  height: 24px;
+  line-height: 24px;
+}
 /* Table rows: cell text sits 7px below the row top with a 20px line (observed 2026-11-12);
  * the number takes the same line, which is also where Notion centres the row's handles. */
 ${F}[data-nlx-numbers] .notion-page-content .notion-table-row::before {
