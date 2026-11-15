@@ -1,6 +1,17 @@
 globalThis.NotionLinksPanelStyle = `
 :host {
   all: initial;
+  /* Stacking (observed 2026-11-15): Notion sets isolation: isolate on every element, so a
+   * z-index only competes with siblings. Its popups (Share, ••• menus) open in
+   * .notion-overlay-container (fixed, z-index 999), a child of .notion-app-inner; the host is
+   * placed in .notion-app-inner too (toolbar.js), and this z-index puts it above Notion's page,
+   * side peek, sidebar and chat and below the popups. The host itself takes no space. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  z-index: 998;
   font:
     13px/1.55 system-ui,
     sans-serif;
@@ -55,11 +66,11 @@ select:focus-visible {
 }
 #pane {
   position: fixed;
-  right: 0;
+  right: var(--pane-right, 0px);
   top: var(--pane-top, 52px);
   bottom: 0;
   width: min(var(--pane-width, 320px), 100vw);
-  z-index: 2147482000;
+  z-index: 998;
   background: var(--bg);
   border-left: 1px solid var(--line);
   display: flex;
@@ -235,12 +246,36 @@ li a[data-active] {
   position: fixed;
   right: 12px;
   top: 8px;
-  z-index: 2147482100;
+  z-index: 998;
   background: var(--bg);
   border: 1px solid var(--line);
 }
+#jump-top {
+  position: fixed;
+  right: calc(28px + var(--jump-offset, 0px));
+  bottom: 76px;
+  z-index: 997;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 12px -2px #00000026;
+}
+#jump-top.low {
+  bottom: 28px;
+}
+#jump-top:hover {
+  background: var(--hover);
+  color: inherit;
+}
 @media print {
   #pane,
+  #jump-top,
   #fallback {
     display: none !important;
   }

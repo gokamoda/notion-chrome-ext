@@ -1,7 +1,7 @@
 /* Line numbers and heading markers.
  * Notion reverts attribute changes inside .notion-page-content (observed 2026-11-12:
  * "Reverting mutation of attribute ..." warnings). So nothing is written inside the
- * body. Switches live on .notion-frame; everything else is CSS in our own <style> elements.
+ * body. Switches live on .notion-frame (or the side peek, see notion-dom.js); everything else is CSS in our own <style> elements.
  * Numbers are a CSS counter over the rendered text elements, so edits (added, deleted or
  * moved blocks) renumber at once. Notion does not render a long page's distant blocks, so the
  * counter starts from the page-structure number of the first rendered block (see start()).
@@ -226,6 +226,12 @@
     codeRoot = frame && settings.codeLineNumbers ? ctx.root || null : null;
     if (frame) setAttr(frame, 'data-nlx-code', !!codeRoot);
     refreshCode();
+    // Switches outside the frame: Notion's AI button and the side peek.
+    const html = document.documentElement;
+    setAttr(html, 'data-nlx-pane-open', paneOpen);
+    setAttr(html, 'data-nlx-peek', paneOpen && !!ctx?.peek);
+    setAttr(html, 'data-nlx-hide-ai', !!settings.hideAiButton);
+    setVar(html, '--nlx-pane-width', `${settings.paneWidth}px`);
     if (!frame) return;
     setAttr(frame, 'data-nlx-pane', paneOpen);
     setAttr(frame, 'data-nlx-outline', paneOpen && settings.outline);

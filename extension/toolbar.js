@@ -44,6 +44,9 @@ button:focus-visible {
     fallback.hidden = true;
 
     function mountToolbar() {
+      // The pane's host goes beside Notion's popup layer (see :host in panel-style.js).
+      const app = document.querySelector('.notion-app-inner') || document.documentElement;
+      if (host.parentElement !== app) app.append(host);
       const toolbar = dom.toolbar(document);
       if (toolbar) {
         const share = dom.shareAnchor(toolbar);

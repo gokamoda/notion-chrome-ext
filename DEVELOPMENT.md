@@ -4,23 +4,24 @@ Chromeに読み込むのは `extension/` です。ビルドは不要です。Jav
 
 ## ファイルの役割
 
-| ファイル（extension/） | 役割 |
-| --- | --- |
-| content.js | 起動、設定反映、ページ移動・DOM監視、非同期取得のキャンセル |
-| pane-view.js | Paneの生成、セクション開閉、高さ・幅のリサイズ、一覧描画 |
-| toolbar.js / ui-elements.js | 上部バーへのアイコン配置、共通DOM生成 |
-| panel-style.js | Pane内のCSS |
-| outline-navigation.js | 未描画の見出しへの移動、現在の見出しの強調 |
-| page-snapshot.js | APIの本文構造と描画済みの編集内容を統合・保持 |
-| page-data.js | 本文の分割取得、未取得の子ブロックの追加取得、取得APIの窓口 |
-| page-structure.js | ブロック構造から見出し・Forward links・行番号を解析 |
-| backlinks.js | リンク元の取得、親ブロックからページを特定、重複排除 |
-| notion-api.js / notion-records.js | 通信・タイムアウト、Notion応答の共通処理 |
-| notion-dom.js / core.js | NotionのDOM判定、URL検証・正規化 |
-| decorations.js / decoration-style.js | 行番号・見出しマーカー・コードブロックの行番号の適用、対応するCSS |
-| code-numbers.js | コードブロックの行の分割と、折り返し後の表示行数の計測 |
-| wide-blocks.js | Paneを開いている間、表・DBビューの幅と左右の余白をPaneの分だけ縮めるCSS |
-| settings.js / popup.html / popup.js | 設定の検証・保存、設定画面 |
+| ファイル（extension/）               | 役割                                                                    |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| content.js                           | 起動、設定反映、ページ移動・DOM監視、非同期取得のキャンセル             |
+| pane-view.js                         | Paneの生成、セクション開閉、高さ・幅のリサイズ、一覧描画                |
+| toolbar.js / ui-elements.js          | 上部バーへのアイコン配置、共通DOM生成                                   |
+| jump-top.js                          | 右下の「ページの先頭へ」ボタン                                          |
+| panel-style.js                       | Pane内のCSS                                                             |
+| outline-navigation.js                | 未描画の見出しへの移動、現在の見出しの強調                              |
+| page-snapshot.js                     | APIの本文構造と描画済みの編集内容を統合・保持                           |
+| page-data.js                         | 本文の分割取得、未取得の子ブロックの追加取得、取得APIの窓口             |
+| page-structure.js                    | ブロック構造から見出し・Forward links・行番号を解析                     |
+| backlinks.js                         | リンク元の取得、親ブロックからページを特定、重複排除                    |
+| notion-api.js / notion-records.js    | 通信・タイムアウト、Notion応答の共通処理                                |
+| notion-dom.js / core.js              | NotionのDOM判定、URL検証・正規化                                        |
+| decorations.js / decoration-style.js | 行番号・見出しマーカー・コードブロックの行番号の適用、対応するCSS       |
+| code-numbers.js                      | コードブロックの行の分割と、折り返し後の表示行数の計測                  |
+| wide-blocks.js                       | Paneを開いている間、表・DBビューの幅と左右の余白をPaneの分だけ縮めるCSS |
+| settings.js / popup.html / popup.js  | 設定の検証・保存、設定画面                                              |
 
 Notionからの読み取り方法の変更は `notion-api.js`・`page-data.js`・`backlinks.js`、応答の解析変更は `notion-records.js`・`page-structure.js`、DOM変更への追従は `notion-dom.js`・`decoration-style.js` を確認してください。
 

@@ -2,8 +2,7 @@
 (() => {
   'use strict';
   if (document.getElementById('notion-links-local-panel')) return;
-  const { pageLink } = NotionLinksCore,
-    dom = NotionLinksDOM,
+  const dom = NotionLinksDOM,
     prefs = NotionLinksSettings;
 
   const view = NotionLinksPane.create({
@@ -37,6 +36,35 @@
 
   const toolbar = NotionLinksToolbar.create({ host, shadow });
   const { linksButton, fallback } = toolbar;
+  const jumpTop = NotionLinksJumpTop.create(shadow, {
+    getScroller: () => (ctx?.scroller?.isConnected ? ctx.scroller : null),
+    getOffset: () => paneRight + (pane.hidden ? 0 : pane.getBoundingClientRect().width),
+  });
+  /* The pane sits at the right edge of Notion's frame, not of the window: Notion opens some
+   * panels (the AI chat, observed 2026-11-14) to the right of the frame and narrows the frame,
+   * and the pane would cover them. The frame's padding for the pane stays inside the frame. */
+  let paneRight = 0,
+    watchedFrame = null;
+  // A narrower frame also changes the widths the wide-block rules use.
+  const frameSize = new ResizeObserver(() => {
+    placePane();
+    schedule();
+  });
+  function placePane() {
+    // A side peek is not a frame: the pane stays at the window's right edge and the peek moves.
+    const frame = ctx?.frame?.isConnected && !ctx.peek ? ctx.frame : null;
+    if (frame !== watchedFrame) {
+      frameSize.disconnect();
+      if (frame) frameSize.observe(frame);
+      watchedFrame = frame;
+    }
+    const gap = frame ? Math.round(innerWidth - frame.getBoundingClientRect().right) : 0;
+    const next = gap > 2 ? gap : 0;
+    if (next === paneRight) return;
+    paneRight = next;
+    host.style.setProperty('--pane-right', `${paneRight}px`);
+    jumpTop.apply(view.settings.jumpToTop);
+  }
   const media = matchMedia('(prefers-color-scheme: dark)');
 
   function applySettings() {
@@ -53,6 +81,8 @@
     backward.details.hidden = !view.settings.backward;
     if (!content.querySelector('.splitter[data-dragging]')) layout();
     NotionLinksDecorations.apply(ctx, view.settings, !pane.hidden, pageData?.numbers);
+    placePane();
+    jumpTop.apply(view.settings.jumpToTop);
   }
 
   prefs
@@ -138,7 +168,7 @@
     lastRun = Date.now();
     toolbar.mount();
     const next = `${location.pathname}${location.search}`,
-      id = pageLink(location.href, location.href)?.id || '';
+      id = dom.target(location.href)?.id || '';
     if (id !== currentID || next !== route) {
       reset();
       currentID = id;

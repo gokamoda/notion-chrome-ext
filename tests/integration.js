@@ -153,6 +153,13 @@
       '入れ子の対象要素（コードブロック）は内側だけに番号',
     );
     {
+      const bars = (el) => getComputedStyle(el, '::before').backgroundImage.includes('gradient');
+      check(
+        bars(document.querySelector('h4')) && !bars(document.getElementById('toggle-child')),
+        'トグル見出しの中のブロックには見出しの縦棒を付けない',
+      );
+    }
+    {
       const inner = document.getElementById('code-inner');
       const after = () => getComputedStyle(inner, '::after').content;
       check(after() === '"1"', 'コードブロックの各行に番号（1行）');
@@ -343,6 +350,71 @@
         '通常クリックは同じタブでページ移動（pushStateとpopstate）',
       );
       history.replaceState(history.state, '', start);
+    }
+    {
+      const scroller = document.querySelector('.notion-scroller.vertical'),
+        jump = root.getElementById('jump-top'),
+        spacer = document.createElement('div');
+      spacer.style.height = '2000px';
+      scroller.append(spacer);
+      const until = async (ok) => {
+        for (let i = 0; i < 60 && !ok(); i++) await new Promise((r) => setTimeout(r, 50));
+        return ok();
+      };
+      scroller.scrollTop = 0;
+      scroller.dispatchEvent(new Event('scroll'));
+      check(await until(() => jump.hidden), '先頭付近では「先頭へ」ボタンを出さない');
+      scroller.scrollTop = 600;
+      scroller.dispatchEvent(new Event('scroll'));
+      check(await until(() => !jump.hidden), 'スクロールすると「先頭へ」ボタンを出す');
+      const corner = document.getElementById('ai-corner');
+      check(
+        getComputedStyle(corner).translate.startsWith('-') && !jump.classList.contains('low'),
+        'Pane表示中はNotionのAIボタンをPaneの左へ移し、「先頭へ」はその上に置く',
+      );
+      jump.click();
+      check(
+        await until(() => scroller.scrollTop === 0 && jump.hidden),
+        '「先頭へ」ボタンでページの先頭に戻る',
+      );
+      {
+        // Notion renders blocks above the view as they come in, which moves the scroll position.
+        const late = document.createElement('div');
+        late.style.height = '1200px';
+        scroller.scrollTop = 1500;
+        await until(() => !jump.hidden);
+        const grow = () => {
+          if (scroller.scrollTop > 300 || late.isConnected) return;
+          scroller.prepend(late);
+          scroller.scrollTop += 1200;
+        };
+        scroller.addEventListener('scroll', grow);
+        jump.click();
+        check(
+          await until(() => late.isConnected && scroller.scrollTop === 0),
+          'スクロール中に上側のブロックが増えても先頭まで戻る',
+        );
+        scroller.removeEventListener('scroll', grow);
+        late.remove();
+      }
+      spacer.remove();
+    }
+    {
+      // Notion narrows the frame when it opens a panel to its right (the AI chat).
+      const frame = document.querySelector('.notion-frame'),
+        paneEl = root.getElementById('pane');
+      frame.style.width = `${innerWidth - 400}px`;
+      const near = () =>
+        Math.abs(paneEl.getBoundingClientRect().right - frame.getBoundingClientRect().right) < 2;
+      for (let i = 0; i < 40 && !near(); i++) await wait(50);
+      check(!paneEl.hidden && near(), 'Notionが右に別のパネルを開くと、Paneはその左に置く');
+      frame.style.width = '';
+      for (let i = 0; i < 40 && paneEl.getBoundingClientRect().right < innerWidth - 2; i++)
+        await wait(50);
+      check(
+        paneEl.getBoundingClientRect().right >= innerWidth - 2,
+        'パネルを閉じるとPaneは右端に戻る',
+      );
     }
     results.push(`完了: ${results.length}件成功`);
   } catch (error) {

@@ -11,6 +11,8 @@
     lineNumbers: true,
     headingMarkers: true,
     codeLineNumbers: true,
+    jumpToTop: true,
+    hideAiButton: false,
     sizes: Object.freeze([1, 1, 1]),
   });
 
@@ -24,6 +26,8 @@
       'lineNumbers',
       'headingMarkers',
       'codeLineNumbers',
+      'jumpToTop',
+      'hideAiButton',
     ]) {
       if (typeof value[key] === 'boolean') result[key] = value[key];
     }

@@ -1,13 +1,24 @@
 // Shared selectors and CSS for line numbers and heading markers.
 (() => {
   'use strict';
-  const F = '.notion-frame[data-nlx-managed]';
+  /* The element carrying the switches: Notion's frame, or the side peek, which has no frame of
+   * its own and plays the same role for the peeked page (observed 2026-11-14). */
+  const F = ':is(.notion-frame, .notion-peek-renderer)[data-nlx-managed]';
   // Elements that carry one number per block. Same targets as the user's former custom CSS.
   const LINE =
     '[data-content-editable-leaf="true"],div[contenteditable="true"]:not([placeholder=" "]),:is(h2,h3,h4,h5)[contenteditable="true"],[data-content-editable-void="true"]:not([data-text-edit-side]),.notion-table-row';
   // H1 to H4 (H4: .notion-header_4-block with an h5, observed 2026-11-12).
-  const HEAD =
-    '.notion-header-block,.notion-sub_header-block,.notion-sub_sub_header-block,.notion-header_4-block';
+  const HEADS = [
+    '.notion-header-block',
+    '.notion-sub_header-block',
+    '.notion-sub_sub_header-block',
+    '.notion-header_4-block',
+  ];
+  /* The heading's own text element. A toggle heading holds its child blocks inside its own block
+   * element (observed 2026-11-13: a text block inside the toggle H3's block), so text elements
+   * inside another block within the heading are not the heading's. A heading nested in a toggle
+   * heading is matched by its own level only. */
+  const OWN = (h) => `${h}:not(:is(${DB}) *) :is(${LINE}):not(${h} [data-block-id] *)`;
   // Monospace digits so that numbers of different lengths line up at the right edge.
   const FONT =
     'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:14px';
@@ -37,9 +48,35 @@
     padding-inline-end: 0 !important;
   }
 }
+/* Notion's AI button at the bottom right of the window (class observed 2026-11-14: the
+ * container holds an absolutely positioned box 24px from the right and bottom edges, outside
+ * the frame). While the pane is open, the box moves left by the pane's width so the pane does
+ * not cover it; it can also be hidden. The switches and the width are set on the root element,
+ * since the box is not inside the frame (and a side peek has no frame). A translate on the
+ * container itself would make it the containing block of the box, so the box is moved instead. */
+:root[data-nlx-pane-open] .notion-assistant-corner-origin-container > * {
+  translate: calc(-1 * var(--nlx-pane-width, 320px)) 0;
+}
+:root[data-nlx-hide-ai] .notion-assistant-corner-origin-container > :has(.notion-ai-button) {
+  display: none !important;
+}
+/* Side peek (observed 2026-11-14: .notion-peek-renderer, absolutely positioned at the right
+ * end with an inline width of 2/3 of the window). While the pane shows the peeked page, the
+ * peek moves left of the pane and is at most 2/3 of the rest, so the page behind keeps about
+ * the share Notion gives it. The peek's width can still be dragged narrower. */
+:root[data-nlx-peek] .notion-peek-renderer {
+  inset-inline-end: var(--nlx-pane-width, 320px) !important;
+  max-width: calc((100% - var(--nlx-pane-width, 320px)) * 2 / 3) !important;
+}
+@media (max-width: 850px) {
+  :root[data-nlx-peek] .notion-peek-renderer {
+    inset-inline-end: 0 !important;
+    max-width: none !important;
+  }
+}
 /* Notion's own floating outline (short lines at the right edge of the body; class observed
  * 2026-11-12) is hidden while the pane shows our Outline. */
-.notion-frame[data-nlx-outline] .notion-floating-table-of-contents {
+:is(.notion-frame, .notion-peek-renderer)[data-nlx-outline] .notion-floating-table-of-contents {
   display: none !important;
 }
 /* Same specificity as the per-block rules, which come later in the document and win. */
@@ -133,8 +170,7 @@ ${F}[data-nlx-numbers] .notion-page-content .notion-table-row::before {
  * stays larger than the gap to the text (4px). Bars are 90% of the heading's line height (70% looked shorter than the text). */
 ${F}[data-nlx-headings]
   .notion-page-content
-  :is(${HEAD}):not(:is(${DB}) *)
-  :is(${LINE})::before {
+  :is(${HEADS.map(OWN).join(', ')})::before {
   content: var(--nlx-num, '') !important;
   position: absolute;
   top: auto;
@@ -157,16 +193,14 @@ ${F}[data-nlx-headings]
 }
 ${F}[data-nlx-headings]
   .notion-page-content
-  .notion-sub_header-block:not(:is(${DB}) *)
-  :is(${LINE})::before {
+  :is(${OWN(HEADS[1])})::before {
   background:
     var(--nlx-bar) right 9px center/2px 90% no-repeat,
     var(--nlx-bar) right 6px center/2px 90% no-repeat;
 }
 ${F}[data-nlx-headings]
   .notion-page-content
-  .notion-sub_sub_header-block:not(:is(${DB}) *)
-  :is(${LINE})::before {
+  :is(${OWN(HEADS[2])})::before {
   background:
     var(--nlx-bar) right 9px center/2px 90% no-repeat,
     var(--nlx-bar) right 6px center/2px 90% no-repeat,
@@ -174,8 +208,7 @@ ${F}[data-nlx-headings]
 }
 ${F}[data-nlx-headings]
   .notion-page-content
-  .notion-header_4-block:not(:is(${DB}) *)
-  :is(${LINE})::before {
+  :is(${OWN(HEADS[3])})::before {
   background:
     var(--nlx-bar) right 9px center/2px 90% no-repeat,
     var(--nlx-bar) right 6px center/2px 90% no-repeat,

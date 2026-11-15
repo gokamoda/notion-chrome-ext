@@ -142,6 +142,39 @@
     const second = make('div', frame, 'notion-page-content', '別ページ');
     assert(adapter.context(document, base).error, '複数本文は曖昧として拒否');
     second.remove();
+    {
+      // Side peek: the peeked page (?p=) is drawn in .notion-peek-renderer beside the page.
+      const peekURL = `${base}?p=${c}&pm=s`;
+      assert(
+        adapter.target(peekURL).id === c && adapter.target(base).id === a,
+        'サイドピーク中はURLのpのページを対象にする',
+      );
+      assert(adapter.context(document, peekURL).error, 'サイドピークの描画前は読まない');
+      const peek = make('div', fixture, 'notion-peek-renderer');
+      const peekTitle = make('div', peek, 'notion-page-block');
+      peekTitle.dataset.blockId = c;
+      make('div', peekTitle, '', 'Peek page').contentEditable = 'true';
+      const peekBody = make('div', peek, 'notion-page-content', 'ピークの本文');
+      const peekCtx = adapter.context(document, peekURL);
+      assert(
+        !peekCtx.error &&
+          peekCtx.root === peekBody &&
+          peekCtx.title === 'Peek page' &&
+          peekCtx.frame === peek &&
+          peekCtx.peek === peek,
+        'サイドピーク中はピーク側の本文とタイトルを読み、装飾の切り替えはピークに付ける',
+      );
+      const bar = make('div', peek);
+      for (const label of ['a', 'b']) make('div', bar, '', label);
+      const share = make('div', make('div', bar), '', '共有');
+      share.setAttribute('role', 'button');
+      share.setAttribute('aria-label', '共有');
+      assert(
+        adapter.toolbar(document) === bar && adapter.shareAnchor(bar) === share,
+        'サイドピーク中はペインの開閉アイコンをピーク上部の共有の左に置く',
+      );
+      peek.remove();
+    }
     body.remove();
     assert(adapter.context(document, base).error, '本文の取得失敗と0件を区別');
     lines.push(`完了: ${lines.length}件成功`);

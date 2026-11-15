@@ -155,6 +155,16 @@
         >
           <div contenteditable="false" role="button">▸</div>
           <h4 contenteditable="true">見出し3</h4>
+          <div>
+            <div
+              class="notion-selectable notion-text-block"
+              data-block-id="abababab-abab-abab-abab-abababababab"
+            >
+              <div contenteditable="true" data-content-editable-leaf="true" id="toggle-child">
+                トグルの中
+              </div>
+            </div>
+          </div>
         </div>
         <div
           class="notion-selectable notion-header_4-block"
@@ -167,6 +177,12 @@
   </div>
   <script src="../extension/core.js"></script>
   <script src="integration-setup.js"></script>
+  <!-- Notion's AI button at the bottom right (structure observed 2026-11-14). -->
+  <div class="notion-assistant-corner-origin-container">
+    <div id="ai-corner" style="position: fixed; right: 24px; bottom: 24px">
+      <div class="notion-ai-button" role="button" style="width: 40px; height: 40px"></div>
+    </div>
+  </div>
   <script src="../extension/notion-dom.js"></script>
   <script src="../extension/notion-records.js"></script>
   <script src="../extension/notion-api.js"></script>
@@ -183,6 +199,7 @@
   <script src="../extension/ui-elements.js"></script>
   <script src="../extension/pane-view.js"></script>
   <script src="../extension/toolbar.js"></script>
+  <script src="../extension/jump-top.js"></script>
   <script src="../extension/page-snapshot.js"></script>
   <script src="../extension/outline-navigation.js"></script>
   <script src="../extension/content.js"></script>

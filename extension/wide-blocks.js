@@ -52,32 +52,43 @@
     const inline = frame?.style.width.match(/^([\d.]+)px$/);
     if (!scroller || !inline) return '';
     // Notion's width: its frame width minus the scroller's scrollbar. Ours: the scroller's
-    // content width with the pane's padding.
+    // content width with the pane's padding. Notion's scrollbar width can be fractional, so the
+    // inline widths are read from the blocks: those within 1.5px of the estimate (observed
+    // 2026-11-14 with the AI chat open: frame 954px, blocks 945.422px).
     const scrollbar = scroller.offsetWidth - scroller.clientWidth;
-    const notionWidth = Math.round(Number(inline[1]) - scrollbar);
+    const estimate = Number(inline[1]) - scrollbar;
     const width = scroller.clientWidth;
-    const delta = (notionWidth - width) / 2;
-    if (!(delta > 0)) return '';
-    const W = `${notionWidth}px`;
-    const wide = `[style*="width: ${W}"]`;
-    // Side spaces are about (width - text column) / 2; smaller lengths (cell paddings) stay.
-    const min = Math.max(40, (notionWidth - root.clientWidth) / 2 - 40);
-    const out = [
-      `${prefix} ${has('width', W)}{width:${width}px !important}`,
-      `${prefix} ${has('max-width', W)}{max-width:${width}px !important}`,
-    ];
+    const values = new Set();
+    for (const el of root.querySelectorAll('[style*="width: "]'))
+      for (const [prop, value] of declarations(el.getAttribute('style') || '')) {
+        const n = prop === 'width' && value.match(/^([\d.]+)px$/);
+        if (n && Math.abs(Number(n[1]) - estimate) <= 1.5) values.add(value);
+      }
+    const out = [];
     const seen = new Set();
-    for (const block of root.querySelectorAll(wide)) {
-      for (const el of [block, ...block.querySelectorAll('[style]')]) {
-        for (const [prop, value] of declarations(el.getAttribute('style') || '')) {
-          if (!SIDE.test(prop) || !SAFE.test(value)) continue;
-          const next = shrink(value, delta, min);
-          const key = `${prop}: ${value}`;
-          if (next === value || seen.has(key)) continue;
-          seen.add(key);
-          out.push(
-            `${prefix} :is(${wide}, ${wide} *)${has(prop, value)}{${prop}:${next} !important}`,
-          );
+    for (const W of values) {
+      const notionWidth = parseFloat(W);
+      const delta = (notionWidth - width) / 2;
+      if (!(delta > 0)) continue;
+      const wide = `[style*="width: ${W}"]`;
+      // Side spaces are about (width - text column) / 2; smaller lengths (cell paddings) stay.
+      const min = Math.max(40, (notionWidth - root.clientWidth) / 2 - 40);
+      out.push(
+        `${prefix} ${has('width', W)}{width:${width}px !important}`,
+        `${prefix} ${has('max-width', W)}{max-width:${width}px !important}`,
+      );
+      for (const block of root.querySelectorAll(wide)) {
+        for (const el of [block, ...block.querySelectorAll('[style]')]) {
+          for (const [prop, value] of declarations(el.getAttribute('style') || '')) {
+            if (!SIDE.test(prop) || !SAFE.test(value)) continue;
+            const next = shrink(value, delta, min);
+            const key = `${W} ${prop}: ${value}`;
+            if (next === value || seen.has(key)) continue;
+            seen.add(key);
+            out.push(
+              `${prefix} :is(${wide}, ${wide} *)${has(prop, value)}{${prop}:${next} !important}`,
+            );
+          }
         }
       }
     }
