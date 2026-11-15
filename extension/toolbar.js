@@ -54,8 +54,13 @@ button:focus-visible {
           if (toolbarHost.nextSibling !== share) share.before(toolbarHost);
         } else if (toolbarHost.parentElement !== toolbar) toolbar.prepend(toolbarHost);
         fallback.hidden = true;
-        const top = toolbar.closest('.notion-topbar')?.getBoundingClientRect().bottom;
-        host.style.setProperty('--pane-top', `${Math.max(0, top || 48)}px`);
+        /* The pane starts below the top bar: the page's, or in a side peek the peek's (where the
+         * toggle then is), i.e. at the top of the peek's scroller. */
+        const peek = toolbar.closest('.notion-peek-renderer');
+        const top = peek
+          ? peek.querySelector('.notion-scroller.vertical')?.getBoundingClientRect().top || 44
+          : toolbar.closest('.notion-topbar')?.getBoundingClientRect().bottom || 48;
+        host.style.setProperty('--pane-top', `${Math.max(0, top)}px`);
       } else {
         fallback.hidden = false;
         toolbarHost.remove();

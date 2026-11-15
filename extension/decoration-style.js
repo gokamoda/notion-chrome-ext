@@ -60,18 +60,18 @@
 :root[data-nlx-hide-ai] .notion-assistant-corner-origin-container > :has(.notion-ai-button) {
   display: none !important;
 }
-/* Side peek (observed 2026-11-14: .notion-peek-renderer, absolutely positioned at the right
- * end with an inline width of 2/3 of the window). While the pane shows the peeked page, the
- * peek moves left of the pane and is at most 2/3 of the rest, so the page behind keeps about
- * the share Notion gives it. The peek's width can still be dragged narrower. */
-:root[data-nlx-peek] .notion-peek-renderer {
-  inset-inline-end: var(--nlx-pane-width, 320px) !important;
-  max-width: calc((100% - var(--nlx-pane-width, 320px)) * 2 / 3) !important;
+/* Side peek (observed 2026-11-15: .notion-peek-renderer at the right end holds its top bar,
+ * 44px high, and below it the page's scroller, with only display: contents boxes between).
+ * While the pane shows the peeked page, the scroller leaves the pane's width on its right, as
+ * the frame does for a page: the peek's top bar still spans the full width, so its buttons and
+ * the pane toggle sit above the pane as on a page. The wide-block rules measure the narrower
+ * scroller. */
+:root[data-nlx-peek] .notion-peek-renderer .notion-scroller.vertical:not(.notion-scroller *) {
+  margin-inline-end: var(--nlx-pane-width, 320px) !important;
 }
 @media (max-width: 850px) {
-  :root[data-nlx-peek] .notion-peek-renderer {
-    inset-inline-end: 0 !important;
-    max-width: none !important;
+  :root[data-nlx-peek] .notion-peek-renderer .notion-scroller.vertical:not(.notion-scroller *) {
+    margin-inline-end: 0 !important;
   }
 }
 /* Notion's own floating outline (short lines at the right edge of the body; class observed
