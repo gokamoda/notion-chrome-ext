@@ -73,21 +73,37 @@
       if (block.alive === false) return;
       const result = new Map();
       topIndex.set(key, top);
-      if (['page', 'collection_view', 'collection_view_page'].includes(block.type)) {
-        if (block.type === 'page') add(block.id, text(block.properties?.title), result);
-        blockLinks.set(key, [...result.values()]);
-        return;
-      }
-      // Line numbers: one per block with its own text/void element. Layout containers have none.
-      // A callout whose own title is empty keeps its text in child blocks (observed 2026-11-12);
-      // the callout itself has no visible line.
+      /* Line numbers: one per block the page shows with a number, i.e. with its own counted
+       * text/void element (COUNT in decoration-style.js); the numbers of blocks that are not
+       * rendered come from here, so the two must agree (observed 2026-11-17: dividers here but
+       * not on the page shifted every number below them by one while scrolling).
+       * Without a counted element (observed 2026-11-12/17): layout containers (column list,
+       * column, table; table rows are counted), databases, dividers, the frame of a synced
+       * block, and a callout whose own title is empty (its text is in child blocks). A child
+       * page link is counted. */
       const emptyCallout =
         block.type === 'callout' &&
         !text(block.properties?.title) &&
         Array.isArray(block.content) &&
         block.content.length > 0;
-      if (!['column_list', 'column', 'table'].includes(block.type) && !emptyCallout)
+      if (
+        ![
+          'column_list',
+          'column',
+          'table',
+          'collection_view',
+          'collection_view_page',
+          'divider',
+          'transclusion_container',
+        ].includes(block.type) &&
+        !emptyCallout
+      )
         numbers.set(key, ++order);
+      if (['page', 'collection_view', 'collection_view_page'].includes(block.type)) {
+        if (block.type === 'page') add(block.id, text(block.properties?.title), result);
+        blockLinks.set(key, [...result.values()]);
+        return;
+      }
       // Table rows have no data-block-id in the page; they are addressed by position in the table.
       if (block.type === 'table' && Array.isArray(block.content))
         block.content.forEach((child, index) =>

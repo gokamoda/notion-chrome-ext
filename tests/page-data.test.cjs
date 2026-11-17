@@ -335,3 +335,21 @@ test('空のコールアウト本体は番号なし、表の行は表内の位�
   assert.equal(r.missing, 0);
   assert.deepEqual(calls, ['loadPageChunk', 'syncRecordValues']);
 });
+test('行番号は画面で番号が付くブロックにだけ割り当てる（区切り線・同期ブロックの枠なし、子ページあり）', () => {
+  const records = {
+    [id(1)]: entry(1, 'page', {}, [2, 3, 4, 5, 7, 8]),
+    [id(2)]: entry(2, 'text', { title: [['a']] }),
+    [id(3)]: entry(3, 'divider'),
+    [id(4)]: entry(4, 'page', { title: [['子ページ']] }, [9]),
+    [id(5)]: entry(5, 'transclusion_container', {}, [6]),
+    [id(6)]: entry(6, 'text', { title: [['同期の中']] }),
+    [id(7)]: entry(7, 'to_do', { title: [['やること']] }),
+    [id(8)]: entry(8, 'text', { title: [['b']] }),
+    [id(9)]: entry(9, 'text', { title: [['子ページの中']] }),
+  };
+  const data = NotionLinksPageData.parse(records, id(1), 'https://app.notion.com');
+  assert.deepEqual(
+    [2, 3, 4, 5, 6, 7, 8, 9].map((n) => data.numbers.get(id(n))),
+    [1, undefined, 2, undefined, 3, 4, 5, undefined],
+  );
+});

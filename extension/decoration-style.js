@@ -29,14 +29,19 @@
    * - an element containing another LINE element (code blocks nest two; void wrappers of code
    *   blocks and tables contain the real lines; observed 2026-11-12),
    * - the callout icon (a void element with an aria-labelled button inside the callout;
-   *   a callout's text is in its child blocks, observed 2026-11-12).
+   *   a callout's text is in its child blocks, observed 2026-11-12),
+   * - the controls at the right end of a to-do ("担当者を追加", "期日を追加"; a void element
+   *   with aria-labelled buttons, observed 2026-11-17; it showed a second number over the
+   *   to-do's own),
+   * - an empty void element (observed 2026-11-17: a synced block adds one, 0px high, below its
+   *   content after the pointer has been over it; it showed a second number on the next line).
    * The exclusions sit in :where() so the selector keeps the specificity of LINE alone; the
    * heading rules below must still win over the number rule. */
   /* The text element of a code block: the innermost LINE element (the code block's void wrapper
    * contains it). */
   const CODE = `.notion-code-block[data-block-id]:not(:is(${DB}) *)`;
   const CODE_TEXT = `:is(${LINE}):not(:has(:is(${LINE})))`;
-  const COUNT = `:is(${LINE}):where(:not(:is(${DB}) *):not(.notion-table-row *):not(:is(${LINE}):not(.notion-table-row):has(:is(${LINE}))):not(.notion-callout-block [data-content-editable-void="true"]:has([aria-label])))`;
+  const COUNT = `:is(${LINE}):where(:not(:is(${DB}) *):not(.notion-table-row *):not(:is(${LINE}):not(.notion-table-row):has(:is(${LINE}))):not(.notion-callout-block [data-content-editable-void="true"]:has([aria-label])):not(.notion-to_do-block [data-content-editable-void="true"]:has([aria-label])):not([data-content-editable-void="true"]:empty))`;
 
   const text = `
 .notion-frame[data-nlx-pane] {
