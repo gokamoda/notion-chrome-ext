@@ -117,6 +117,31 @@
         `カウンターはページ構造の番号から数え始める（${getComputedStyle(body).counterReset}）`,
       );
     }
+    {
+      // H2 stands for a closed toggle: 8 numbered descendants (12-19) with no rendered block.
+      const key = (i) => hid(i).replaceAll('-', '');
+      const map = new Map([
+        [key(1), 10],
+        [key(2), 11],
+        [key(3), 20],
+        [key(4), 21],
+      ]);
+      NotionLinksDecorations.apply(ctx, on, true, map, new Map([[key(2), 8]]));
+      const set = (i) =>
+        getComputedStyle(body.querySelector(`[data-block-id="${hid(i)}"]`)).counterSet;
+      const gapOnly = new Map([...map].map(([k, v]) => [k, k === key(4) ? v + 3 : v]));
+      NotionLinksDecorations.apply(ctx, on, true, gapOnly, new Map([[key(2), 8]]));
+      const later = set(4);
+      NotionLinksDecorations.apply(ctx, on, true, map, new Map([[key(2), 8]]));
+      assert(
+        set(3) === 'nlx-line 19' &&
+          set(1) === 'none' &&
+          set(2) === 'none' &&
+          set(4) === 'none' &&
+          later === 'none',
+        `閉じたトグルの後は中のブロックの数だけ番号を進める（${[1, 2, 3, 4].map(set).join(' / ')}）`,
+      );
+    }
     NotionLinksDecorations.apply(ctx, { ...on, lineNumbers: false, headingMarkers: false }, false);
     assert(
       getComputedStyle(h3, '::before').content === 'none' &&

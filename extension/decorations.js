@@ -3,9 +3,9 @@
  * "Reverting mutation of attribute ..." warnings). So nothing is written inside the
  * body. Switches live on .notion-frame (or the side peek, see notion-dom.js); everything else is CSS in our own <style> elements.
  * Numbers are a CSS counter over the rendered text elements, so edits (added, deleted or
- * moved blocks) renumber at once. Notion does not render a long page's distant blocks, so the
- * counter starts from the page-structure number of the first rendered block (see start()).
- * Children of closed toggles are not rendered and therefore not counted.
+ * moved blocks) renumber at once. Not every block is rendered: Notion leaves out a long page's
+ * distant blocks and the children of closed toggles. So the counter is set to the
+ * page-structure number where the rendered blocks skip numbers (see counterRules()).
  */
 (() => {
   'use strict';
@@ -43,26 +43,74 @@
     if (node.style.getPropertyValue(key) !== value) node.style.setProperty(key, value);
   }
 
-  /* Counter start: the page-structure number of the first rendered block that has one, minus
-   * the elements counted before and including it. 0 without the page structure (numbers then
-   * count from the first rendered element). numberMap: Map(normalized id -> ordinal). */
+  /* Counter rules: the start, and the numbers skipped after closed toggles.
+   * Numbers count the rendered text elements, but not every block is rendered: Notion leaves
+   * out a long page's distant blocks and the children of closed toggles. Counting alone fell
+   * behind there, and shifted as the rendered range moved while scrolling (observed
+   * 2026-11-17: below a closed toggle with 5 children, the next block showed 5 less, but only
+   * while the toggle itself was rendered).
+   * - Above the first rendered block: the counter starts from the page-structure number of the
+   *   first rendered element that has one, minus the elements counted before and including it.
+   * - After a block that has numbered descendants in the page structure but no rendered child
+   *   block: the next element's block sets the counter to the running count plus those
+   *   descendants (its text element then counts one more).
+   * Blocks added or removed since the page structure was read are only counted, so edits still
+   * renumber at once. Without the page structure, numbers count from the first rendered element.
+   * numberMap / descendants: Map(normalized id -> ordinal / numbered descendants). */
 
-  function start(root, numberMap) {
-    if (!root || !numberMap?.size) return 0;
-    let i = 0;
+  function counterRules(root, numberMap, descendants) {
+    if (!root || !numberMap?.size) return { start: 0, sets: [] };
+    const sets = [];
+    let start = null,
+      count = 0,
+      skip = 0;
     for (const el of root.querySelectorAll(COUNT)) {
-      i++;
-      if (el.classList.contains('notion-table-row')) continue;
-      const n = numberMap.get(
-        el
-          .closest('[data-block-id]')
-          ?.getAttribute('data-block-id')
-          ?.replaceAll('-', '')
-          .toLowerCase(),
-      );
-      if (Number.isInteger(n)) return Math.max(0, n - i);
+      const block = el.closest('[data-block-id]');
+      const raw = block?.getAttribute('data-block-id') || '';
+      const key = raw.replaceAll('-', '').toLowerCase();
+      if (skip && UUID.test(raw)) {
+        count += skip;
+        sets.push(
+          `${F}[data-nlx-numbers] .notion-page-content [data-block-id="${hyphenate(raw)}"]{counter-set:nlx-line ${(start ?? 0) + count}}`,
+        );
+        skip = 0;
+      }
+      count++;
+      if (el.classList.contains('notion-table-row') || !block) continue;
+      const n = numberMap.get(key);
+      if (start === null && Number.isInteger(n)) start = Math.max(0, n - count);
+      const hidden = descendants?.get(key);
+      if (
+        hidden &&
+        ![...block.querySelectorAll('[data-block-id]')].some(
+          (d) => d.getAttribute('data-block-id') !== raw,
+        )
+      )
+        skip += hidden;
     }
-    return 0;
+    return { start: start ?? 0, sets };
+  }
+
+  /* The counter part of the number style, rebuilt whenever the rendered blocks change (see
+   * refreshNumbers()); the offsets part is measured at the regular updates. */
+  let numberRoot = null,
+    numberMapNow = null,
+    descendantsNow = null,
+    offsetText = '';
+  function numberText() {
+    if (!numberRoot?.isConnected) return offsetText;
+    const { start, sets } = counterRules(numberRoot, numberMapNow, descendantsNow);
+    return [
+      `${F}[data-nlx-numbers] .notion-page-content{counter-reset:nlx-line ${start}}`,
+      ...sets,
+      offsetText,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+  function refreshNumbers() {
+    const text = numberText();
+    if (numbers.textContent !== text) numbers.textContent = text;
   }
 
   /* Offset of each mounted block's number box from the shared column: the distance between the
@@ -198,7 +246,7 @@
     if (code.textContent !== full) code.textContent = full;
   }
 
-  function apply(ctx, settings, paneOpen, numberMap) {
+  function apply(ctx, settings, paneOpen, numberMap, descendants) {
     const frame = ctx?.frame || null;
     if (previousFrame && previousFrame !== frame)
       for (const key of [
@@ -211,17 +259,12 @@
       ])
         setAttr(previousFrame, key, false);
     previousFrame = frame;
-    const text = frame
-      ? [
-          settings.lineNumbers && ctx.root
-            ? `${F}[data-nlx-numbers] .notion-page-content{counter-reset:nlx-line ${start(ctx.root, numberMap)}}`
-            : '',
-          settings.lineNumbers || settings.headingMarkers ? offsets(ctx.root) : '',
-        ]
-          .filter(Boolean)
-          .join('\n')
-      : '';
-    if (numbers.textContent !== text) numbers.textContent = text;
+    numberRoot = frame && settings.lineNumbers ? ctx.root || null : null;
+    numberMapNow = numberMap || null;
+    descendantsNow = descendants || null;
+    offsetText =
+      frame && (settings.lineNumbers || settings.headingMarkers) ? offsets(ctx.root) : '';
+    refreshNumbers();
     if (!frame && wide.textContent) wide.textContent = '';
     codeRoot = frame && settings.codeLineNumbers ? ctx.root || null : null;
     if (frame) setAttr(frame, 'data-nlx-code', !!codeRoot);
@@ -252,6 +295,7 @@
   globalThis.NotionLinksDecorations = Object.freeze({
     apply,
     refreshCode,
+    refreshNumbers,
     isOwnNode: (n) => n === base || n === numbers || n === code || n === wide,
   });
 })();

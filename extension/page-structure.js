@@ -12,6 +12,8 @@
       links = new Map(),
       blockLinks = new Map(),
       numbers = new Map(),
+      // Numbered blocks below each block (counted for the children of closed toggles).
+      descendants = new Map(),
       topIndex = new Map(),
       tableRows = new Map();
     const visited = new Set(),
@@ -122,8 +124,10 @@
       if (['transclusion_reference', 'synced_block', 'unsupported'].includes(block.type))
         unsupported.add(block.type);
       blockLinks.set(key, [...result.values()]);
+      const before = order;
       if (Array.isArray(block.content))
         for (const child of block.content) visit(child, top, depth + 1);
+      if (order > before) descendants.set(key, order - before);
     }
 
     root.content.forEach((id, index) => visit(id, index, 0));
@@ -132,6 +136,7 @@
       links: [...links.values()],
       blockLinks,
       numbers,
+      descendants,
       tableRows,
       topIndex,
       topBlocks: root.content.map(normalize),

@@ -7,7 +7,13 @@
 
   const view = NotionLinksPane.create({
     applyDecorations: () =>
-      NotionLinksDecorations.apply(ctx, view.settings, !view.pane.hidden, pageData?.numbers),
+      NotionLinksDecorations.apply(
+        ctx,
+        view.settings,
+        !view.pane.hidden,
+        pageData?.numbers,
+        pageData?.descendants,
+      ),
     onOutlineClick: (item) => navigation.jump(item),
   });
   const { host, shadow, pane, content, title, outline, forward, backward, layout, renderList } =
@@ -80,7 +86,13 @@
     forward.details.hidden = !view.settings.forward;
     backward.details.hidden = !view.settings.backward;
     if (!content.querySelector('.splitter[data-dragging]')) layout();
-    NotionLinksDecorations.apply(ctx, view.settings, !pane.hidden, pageData?.numbers);
+    NotionLinksDecorations.apply(
+      ctx,
+      view.settings,
+      !pane.hidden,
+      pageData?.numbers,
+      pageData?.descendants,
+    );
     placePane();
     jumpTop.apply(view.settings.jumpToTop);
   }
@@ -268,6 +280,12 @@
   const observer = new MutationObserver((records) => {
     if (records.every((r) => own(r.target.nodeType === 1 ? r.target : r.target.parentElement)))
       return;
+    /* Notion mounts and unmounts blocks while scrolling; the counter rules follow before the
+     * next paint, not after the delay below (with the delay, all numbers were off by the blocks
+     * removed above until the update, observed 2026-11-17). */
+    const root = ctx?.root;
+    if (root?.isConnected && records.some((r) => r.type === 'childList' && root.contains(r.target)))
+      NotionLinksDecorations.refreshNumbers();
     // Edits inside a code block renumber its lines at the next frame, not after the delay below.
     if (
       !codeFrame &&

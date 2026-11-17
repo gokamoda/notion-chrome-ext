@@ -323,6 +323,10 @@ test('空のコールアウト本体は番号なし、表の行は表内の位�
     [id(210), id(203), id(204), id(205), id(206)].map((k) => r.numbers.get(k)),
     [1, 2, 3, 4, 5],
   );
+  assert.deepEqual(
+    [id(201), id(202), id(205), id(210)].map((k) => r.descendants.get(k)),
+    [1, 2, 1, undefined],
+  );
   assert.deepEqual(r.tableRows.get(id(204)), { table: id(202), index: 1 });
   assert.deepEqual(
     r.headings.map((h) => h.title),
